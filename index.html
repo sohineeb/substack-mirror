@@ -278,6 +278,7 @@
     }
 
     .modal-status.error { color: var(--red); }
+    .modal-status.nudge { color: var(--amber); }
     .modal-status.success { color: var(--green); }
     .modal-status.loading { color: var(--rule); }
 
@@ -819,8 +820,8 @@
       const btn = document.getElementById('rss-btn');
 
       if (!raw) {
-        status.textContent = 'Enter your publication name — e.g. yourletters';
-        status.className = 'modal-status error';
+        status.textContent = 'The Mirror needs a name to consult. Enter your publication name above.';
+        status.className = 'modal-status nudge';
         return;
       }
 
@@ -841,18 +842,19 @@
           signal: AbortSignal.timeout(12000),
         });
 
-        if (!res.ok) {
-          status.textContent = `Could not reach the feed service — please try again.`;
-          status.className = 'modal-status error';
+        const data = await res.json();
+
+        // Rate limited or service busy
+        if (!res.ok || data.status === 'error') {
+          status.textContent = 'Too many writers consulting the Mirror at once. Set your date below — the date picker works just as well.';
+          status.className = 'modal-status nudge';
           btn.disabled = false;
           return;
         }
 
-        const data = await res.json();
-
-        if (data.status !== 'ok' || !data.items || data.items.length === 0) {
-          status.textContent = `No published posts found for "${slug}". Check the name or use the date picker below.`;
-          status.className = 'modal-status error';
+        if (!data.items || data.items.length === 0) {
+          status.textContent = 'The Mirror could not find that publication. Check the name, or set your date below.';
+          status.className = 'modal-status nudge';
           btn.disabled = false;
           return;
         }
@@ -862,8 +864,8 @@
         const pubDate = new Date(latest.pubDate);
 
         if (isNaN(pubDate.getTime())) {
-          status.textContent = 'Found your newsletter but could not read the post date. Try setting it manually below.';
-          status.className = 'modal-status error';
+          status.textContent = 'The Mirror found your newsletter but could not read the date. Set it below — it only takes a moment.';
+          status.className = 'modal-status nudge';
           btn.disabled = false;
           return;
         }
@@ -883,8 +885,8 @@
         setTimeout(() => closeModal(), 1400);
 
       } catch (e) {
-        status.textContent = 'Request timed out — please try again.';
-        status.className = 'modal-status error';
+        status.textContent = 'The Mirror is momentarily indisposed. Set your date below — it works just as well.';
+        status.className = 'modal-status nudge';
       } finally {
         btn.disabled = false;
       }

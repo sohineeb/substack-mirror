@@ -335,9 +335,9 @@
       cursor: pointer;
       outline: none;
       transition: border-color 0.2s;
-      -webkit-appearance: none;
-      appearance: none;
       min-width: 160px;
+      min-height: 2rem;
+    }
     }
 
     input[type="date"]:hover,
@@ -682,9 +682,19 @@
       letter-spacing: 0.3em;
     }
 
+    .date-hint {
+      display: none;
+      font-family: 'Lora', serif;
+      font-style: italic;
+      font-size: 0.7rem;
+      color: var(--rule);
+      margin-top: 0.4rem;
+    }
+
     @media (max-width: 480px) {
-      .verdict-card { padding: 2rem 1.5rem 2rem; }
+      .verdict-card { padding: 1.5rem 1.25rem; }
       .masthead h1 { font-size: 2.2rem; }
+      .date-hint { display: block; }
     }
   </style>
 </head>
@@ -738,6 +748,7 @@
       <span class="dateline-prefix">On the</span>
       <input type="date" id="last-post-date" />
     </div>
+    <p class="date-hint">Tap to pick a date</p>
   </section>
 
   <section class="display-section" id="display-section">

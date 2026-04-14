@@ -835,7 +835,7 @@
       status.className = 'modal-status loading';
 
       try {
-        const res = await fetch(`/.netlify/functions/fetch-feed?slug=${encodeURIComponent(slug)}`, {
+        const res = await fetch(`/functions/fetch-feed?slug=${encodeURIComponent(slug)}`, {
           signal: AbortSignal.timeout(10000),
         });
 

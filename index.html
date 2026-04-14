@@ -1,0 +1,1050 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>The Substack Mirror</title>
+  <meta name="description" content="How many days since your last Substack post? The Mirror is watching.">
+  <meta property="og:title" content="The Substack Mirror">
+  <meta property="og:description" content="How many days since your last Substack post? The Mirror is watching.">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="The Substack Mirror">
+  <meta name="twitter:description" content="How many days since your last Substack post? The Mirror is watching.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=Lora:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --ink: #1a1208;
+      --paper: #f5f0e8;
+      --paper-dark: #ede6d6;
+      --accent: #c8773a;
+      --accent-light: #e8a870;
+      --rule: #c8b89a;
+      --green: #3a7a52;
+      --amber: #c8773a;
+      --red: #b03030;
+      --green-bg: #eef5f1;
+      --amber-bg: #fdf4ec;
+      --red-bg: #fdf0f0;
+    }
+
+    html, body {
+      height: 100%;
+    }
+
+    body {
+      font-family: 'Lora', Georgia, serif;
+      background-color: var(--paper);
+      color: var(--ink);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 0 1.5rem 1.5rem;
+      background-image:
+        radial-gradient(ellipse at 20% 10%, rgba(200, 119, 58, 0.06) 0%, transparent 60%),
+        radial-gradient(ellipse at 80% 90%, rgba(200, 119, 58, 0.04) 0%, transparent 60%);
+    }
+
+    /* Grain texture overlay */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 100;
+      opacity: 0.5;
+    }
+
+    /* Masthead */
+    .masthead {
+      width: 100%;
+      max-width: 680px;
+      border-bottom: 2px solid var(--ink);
+      padding: 1.25rem 0 0.5rem;
+      margin-bottom: 0.2rem;
+      position: relative;
+      animation: fadeDown 0.6s ease both;
+    }
+
+    .masthead-top {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      font-family: 'Lora', serif;
+      font-size: 0.7rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 0.5rem;
+    }
+
+    .masthead h1 {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: clamp(2.4rem, 7vw, 3.8rem);
+      font-weight: 900;
+      line-height: 1;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+    }
+
+    .masthead h1 em {
+      font-style: italic;
+      font-weight: 400;
+    }
+
+    .masthead-rule {
+      border: none;
+      border-top: 1px solid var(--rule);
+      margin: 0.6rem 0 0;
+    }
+
+    /* Autofill trigger link */
+    .autofill-row {
+      width: 100%;
+      max-width: 680px;
+      padding: 0.9rem 0 0;
+      animation: fadeDown 0.6s 0.1s ease both;
+    }
+
+    .autofill-trigger {
+      font-family: 'Lora', serif;
+      font-style: italic;
+      font-size: 0.82rem;
+      color: var(--ink);
+      opacity: 0.6;
+      background: none;
+      border: none;
+      border-bottom: 1px solid var(--rule);
+      padding: 0 0 0.1rem;
+      cursor: pointer;
+      letter-spacing: 0.02em;
+      transition: opacity 0.2s, border-color 0.2s, color 0.2s;
+    }
+
+    .autofill-trigger:hover {
+      opacity: 1;
+      color: var(--accent);
+      border-color: var(--accent);
+    }
+
+    /* Modal overlay */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(26, 18, 8, 0.45);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+      backdrop-filter: blur(2px);
+    }
+
+    .modal-overlay.open {
+      display: flex;
+    }
+
+    .modal {
+      background: var(--paper);
+      border: 1.5px solid var(--ink);
+      max-width: 480px;
+      width: 100%;
+      padding: 2rem 2rem 1.75rem;
+      position: relative;
+      animation: fadeUp 0.25s ease both;
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      background: none;
+      border: none;
+      font-family: 'Lora', serif;
+      font-size: 0.65rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--rule);
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+
+    .modal-close:hover { color: var(--ink); }
+
+    .modal-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--ink);
+      margin-bottom: 0.3rem;
+    }
+
+    .modal-intro {
+      font-family: 'Lora', serif;
+      font-style: italic;
+      font-size: 0.82rem;
+      color: var(--ink);
+      opacity: 0.65;
+      line-height: 1.6;
+      margin-bottom: 1.25rem;
+    }
+
+    .modal-help {
+      border-top: 1px solid var(--rule);
+      padding-top: 1rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .modal-help p {
+      font-family: 'Lora', serif;
+      font-size: 0.78rem;
+      color: var(--ink);
+      opacity: 0.7;
+      line-height: 1.6;
+      margin-bottom: 0.5rem;
+    }
+
+    .modal-help p:last-child { margin-bottom: 0; }
+
+    .modal-help strong {
+      font-weight: 600;
+      opacity: 1;
+    }
+
+    .modal-input-row {
+      display: flex;
+      gap: 0.75rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .modal-rss-input {
+      font-family: 'Lora', serif;
+      font-size: 0.95rem;
+      color: var(--ink);
+      background: transparent;
+      border: none;
+      border-bottom: 1.5px solid var(--ink);
+      padding: 0.3rem 0.1rem;
+      outline: none;
+      flex: 1;
+      min-width: 160px;
+      transition: border-color 0.2s;
+    }
+
+    .modal-rss-input::placeholder {
+      color: var(--rule);
+      font-style: italic;
+    }
+
+    .modal-rss-input:focus {
+      border-bottom-color: var(--accent);
+    }
+
+    .modal-fetch-btn {
+      font-family: 'Lora', serif;
+      font-size: 0.68rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--paper);
+      background: var(--ink);
+      border: none;
+      padding: 0.45rem 1rem;
+      cursor: pointer;
+      transition: background 0.2s;
+      white-space: nowrap;
+    }
+
+    .modal-fetch-btn:hover:not(:disabled) { background: var(--accent); }
+    .modal-fetch-btn:disabled { opacity: 0.35; cursor: default; }
+
+    .modal-status {
+      margin-top: 0.6rem;
+      font-family: 'Lora', serif;
+      font-style: italic;
+      font-size: 0.72rem;
+      min-height: 1rem;
+      line-height: 1.4;
+    }
+
+    .modal-status.error { color: var(--red); }
+    .modal-status.success { color: var(--green); }
+    .modal-status.loading { color: var(--rule); }
+
+    .section-divider {
+      width: 100%;
+      max-width: 680px;
+      border: none;
+      border-top: 1px solid var(--rule);
+      margin: 1rem 0 0;
+    }
+
+    /* Dateline section */
+    .dateline-section {
+      width: 100%;
+      max-width: 680px;
+      padding: 1rem 0 0;
+      animation: fadeDown 0.6s 0.15s ease both;
+    }
+
+    .section-label {
+      font-family: 'Lora', serif;
+      font-size: 0.65rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--ink);
+      opacity: 0.55;
+      margin-bottom: 0.75rem;
+    }
+
+    .dateline-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .dateline-prefix {
+      font-family: 'Lora', serif;
+      font-style: italic;
+      font-size: 1rem;
+      color: var(--ink);
+      opacity: 0.7;
+      white-space: nowrap;
+    }
+
+    input[type="date"] {
+      font-family: 'Lora', serif;
+      font-size: 1rem;
+      color: var(--ink);
+      background: transparent;
+      border: none;
+      border-bottom: 1.5px solid var(--rule);
+      padding: 0.25rem 0.1rem;
+      cursor: pointer;
+      outline: none;
+      transition: border-color 0.2s;
+      -webkit-appearance: none;
+      appearance: none;
+      min-width: 160px;
+    }
+
+    input[type="date"]:hover,
+    input[type="date"]:focus {
+      border-bottom-color: var(--accent);
+    }
+
+    input[type="date"]::-webkit-calendar-picker-indicator {
+      opacity: 0.4;
+      cursor: pointer;
+    }
+
+    /* Main display */
+    .display-section {
+      width: 100%;
+      max-width: 680px;
+      margin-top: 1rem;
+      animation: fadeUp 0.7s 0.3s ease both;
+    }
+
+    .verdict-card {
+      border: 1.5px solid var(--rule);
+      padding: 1.5rem 2rem 1.5rem;
+      position: relative;
+      background: var(--paper);
+      transition: border-color 0.5s, background-color 0.5s;
+    }
+
+    .verdict-card::before {
+      content: '';
+      position: absolute;
+      inset: 5px;
+      border: 1px solid transparent;
+      transition: border-color 0.5s;
+      pointer-events: none;
+    }
+
+    .verdict-card.green { background-color: var(--green-bg); border-color: var(--green); }
+    .verdict-card.green::before { border-color: rgba(58, 122, 82, 0.2); }
+    .verdict-card.amber { background-color: var(--amber-bg); border-color: var(--amber); }
+    .verdict-card.amber::before { border-color: rgba(200, 119, 58, 0.2); }
+    .verdict-card.red { background-color: var(--red-bg); border-color: var(--red); }
+    .verdict-card.red::before { border-color: rgba(176, 48, 48, 0.2); }
+
+    .days-number {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: clamp(5rem, 18vw, 9rem);
+      font-weight: 900;
+      line-height: 0.9;
+      letter-spacing: -0.04em;
+      display: block;
+      transition: color 0.5s;
+      color: var(--ink);
+    }
+
+    .verdict-card.green .days-number { color: var(--green); }
+    .verdict-card.amber .days-number { color: var(--amber); }
+    .verdict-card.red .days-number { color: var(--red); }
+
+    .days-number {
+      margin-bottom: 0.2em;
+    }
+
+    .days-label {
+      font-family: 'Lora', serif;
+      font-style: italic;
+      font-size: clamp(1.1rem, 3.5vw, 1.5rem);
+      color: var(--ink);
+      opacity: 0.65;
+      margin-top: 0.4rem;
+      display: block;
+      transition: opacity 0.4s;
+    }
+
+    .verdict-message {
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--rule);
+      font-family: 'Playfair Display', serif;
+      font-style: italic;
+      font-size: clamp(0.9rem, 2.2vw, 1.1rem);
+      line-height: 1.5;
+      color: var(--ink);
+      opacity: 0.8;
+      transition: opacity 0.4s;
+    }
+
+    .verdict-message .byline {
+      display: block;
+      margin-top: 0.75rem;
+      font-family: 'Lora', serif;
+      font-style: normal;
+      font-size: 0.7rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      opacity: 0.5;
+    }
+
+    /* Future illustration */
+    .future-illustration {
+      display: none;
+      text-align: center;
+      padding: 0.75rem 0 0.75rem;
+    }
+
+    .future-clock-wrap {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .future-clock-face {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      border: 3px solid #3a2e1a;
+      background: #e8e0cc;
+      font-family: 'Playfair Display', Georgia, serif;
+      font-style: italic;
+      font-size: 1.8rem;
+      color: #3a2e1a;
+      font-weight: 900;
+      letter-spacing: -0.05em;
+      box-shadow: inset 0 0 0 4px #f5f0e8, inset 0 0 0 6px #3a2e1a;
+      animation: tictoc 1.8s ease-in-out infinite;
+      position: relative;
+    }
+
+    .future-clock-caption {
+      display: block;
+      font-family: 'Lora', serif;
+      font-style: italic;
+      font-size: 0.72rem;
+      letter-spacing: 0.08em;
+      color: #3a2e1a;
+      opacity: 0.45;
+    }
+
+    @keyframes tictoc {
+      0%, 100% { transform: rotate(-5deg); }
+      50% { transform: rotate(5deg); }
+    }
+
+    /* Write button */
+    .write-link-wrapper {
+      width: 100%;
+      max-width: 680px;
+      margin-top: 0.85rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      animation: fadeUp 0.7s 0.45s ease both;
+    }
+
+    .write-link {
+      font-family: 'Lora', serif;
+      font-size: 0.7rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--ink);
+      text-decoration: none;
+      border-bottom: 1.5px solid var(--ink);
+      padding-bottom: 0.15rem;
+      opacity: 0.5;
+      transition: opacity 0.2s, color 0.2s, border-color 0.2s;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+      white-space: nowrap;
+    }
+
+    .write-link:hover {
+      opacity: 1;
+      color: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .write-link svg {
+      width: 11px;
+      height: 11px;
+      flex-shrink: 0;
+      transition: transform 0.2s;
+    }
+
+    .write-link:hover svg {
+      transform: translate(2px, -2px);
+    }
+
+    .share-btn {
+      font-family: 'Lora', serif;
+      font-size: 0.7rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--ink);
+      background: none;
+      border: none;
+      border-bottom: 1.5px solid var(--ink);
+      padding: 0 0 0.15rem;
+      opacity: 0.5;
+      cursor: pointer;
+      transition: opacity 0.2s, color 0.2s, border-color 0.2s;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+      white-space: nowrap;
+    }
+
+    .share-btn:hover {
+      opacity: 1;
+      color: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .share-btn svg {
+      width: 11px;
+      height: 11px;
+      flex-shrink: 0;
+    }
+
+    .share-btn.copied {
+      opacity: 1;
+      color: var(--green);
+      border-color: var(--green);
+    }
+
+    .share-btn span.share-label { display: inline; }
+    .share-btn span.copied-label { display: none; }
+    .share-btn.copied span.share-label { display: none; }
+    .share-btn.copied span.copied-label { display: inline; }
+
+    /* Quill illustration */
+    .quill-illustration {
+      text-align: center;
+      padding: 0.75rem 0 0.75rem;
+      display: block;
+    }
+
+    .quill-wrap {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .quill-face {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      border: 3px solid #3a2e1a;
+      background: #e8e0cc;
+      font-size: 1.9rem;
+      box-shadow: inset 0 0 0 4px #f5f0e8, inset 0 0 0 6px rgba(58,46,26,0.12);
+      animation: quillbob 3s ease-in-out infinite;
+    }
+
+    .quill-caption {
+      display: block;
+      font-family: 'Lora', serif;
+      font-style: italic;
+      font-size: 0.72rem;
+      letter-spacing: 0.08em;
+      color: #3a2e1a;
+      opacity: 0.45;
+    }
+
+    @keyframes quillbob {
+      0%, 100% { transform: rotate(-4deg) translateY(0); }
+      50% { transform: rotate(4deg) translateY(-3px); }
+    }
+
+    /* No date state */
+    .no-date-message {
+      font-family: 'Playfair Display', serif;
+      font-style: italic;
+      font-size: 1.1rem;
+      color: var(--ink);
+      opacity: 0.45;
+      text-align: center;
+      margin: 0;
+    }
+
+    /* Footer */
+    .footer-rule {
+      width: 100%;
+      max-width: 680px;
+      margin-top: 40px;
+      border: none;
+      border-top: 2px solid var(--ink);
+      animation: fadeUp 0.6s 0.5s ease both;
+    }
+
+    .footer {
+      width: 100%;
+      max-width: 680px;
+      padding-top: 0.85rem;
+      padding-bottom: 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      font-family: 'Lora', serif;
+      font-size: 0.65rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--ink);
+      opacity: 0.4;
+      animation: fadeUp 0.6s 0.5s ease both;
+    }
+
+    /* Animations */
+    @keyframes fadeDown {
+      from { opacity: 0; transform: translateY(-12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+
+    .verdict-card.red .days-number {
+      animation: pulse 2.5s ease-in-out infinite;
+    }
+
+    /* Streaks / ornament */
+    .ornament {
+      font-size: 1.1rem;
+      opacity: 0.3;
+      letter-spacing: 0.3em;
+    }
+
+    @media (max-width: 480px) {
+      .verdict-card { padding: 2rem 1.5rem 2rem; }
+      .masthead h1 { font-size: 2.2rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="masthead">
+    <div class="masthead-top">
+      <span>Vol. I &nbsp;·&nbsp; No. 1</span>
+      <span class="ornament">— ✦ —</span>
+      <span id="today-date">—</span>
+    </div>
+    <h1>The Substack <em>Mirror</em></h1>
+    <hr class="masthead-rule">
+  </header>
+
+  <div class="autofill-row">
+    <button class="autofill-trigger" onclick="openModal()">Auto-fill from Substack ↓</button>
+  </div>
+
+  <hr class="section-divider">
+
+  <!-- Modal -->
+  <div class="modal-overlay" id="modal-overlay" onclick="handleOverlayClick(event)">
+    <div class="modal">
+      <button class="modal-close" onclick="closeModal()">Close ✕</button>
+      <p class="modal-title">Auto-fill from Substack</p>
+      <p class="modal-intro">Enter your Substack publication name and The Mirror will find your last post date automatically.</p>
+      <div class="modal-help">
+        <p><strong>Have a newsletter?</strong> Just type your publication name — the part before <em>.substack.com</em>. For example, if your newsletter is at <em>yourletters.substack.com</em>, enter <em>yourletters</em>.</p>
+        <p><strong>Not sure of your name?</strong> On the web, go to your Substack dashboard and look at the URL in your browser — it'll say <em>yourname.substack.com</em>. On the mobile app, tap your avatar → Settings → Edit Profile → scroll down to see your URL.</p>
+        <p><strong>No newsletter yet?</strong> Skip this and use the date picker below instead — set it to whenever you last published anything, anywhere.</p>
+      </div>
+      <div class="modal-input-row">
+        <input
+          type="text"
+          class="modal-rss-input"
+          id="rss-input"
+          placeholder="yourpublicationname"
+          autocomplete="off"
+          spellcheck="false"
+        />
+        <button class="modal-fetch-btn" id="rss-btn" onclick="fetchFromRSS()">Fetch ↓</button>
+      </div>
+      <div class="modal-status" id="rss-status"></div>
+    </div>
+  </div>
+
+  <section class="dateline-section">
+    <p class="section-label">Last published</p>
+    <div class="dateline-wrapper">
+      <span class="dateline-prefix">On the</span>
+      <input type="date" id="last-post-date" />
+    </div>
+  </section>
+
+  <section class="display-section" id="display-section">
+    <div class="verdict-card" id="verdict-card">
+      <div class="quill-illustration">
+        <div class="quill-wrap">
+          <div class="quill-face">✒️</div>
+          <p class="no-date-message" id="no-date-msg">Set a date to begin your reckoning.</p>
+        </div>
+      </div>
+      <div class="future-illustration" id="future-illustration">
+        <div class="future-clock-wrap">
+          <span class="future-clock-face">(?)</span>
+          <span class="future-clock-caption">the mirror does not deal in prophecy</span>
+        </div>
+      </div>
+      <span class="days-number" id="days-number" style="display:none"></span>
+      <span class="days-label" id="days-label" style="display:none"></span>
+      <div class="verdict-message" id="verdict-message" style="display:none"></div>
+    </div>
+  </section>
+
+  <div class="write-link-wrapper">
+    <button class="share-btn" id="share-btn" style="display:none" onclick="shareState()">
+      <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="9.5" cy="2.5" r="1.5" stroke="currentColor" stroke-width="1.2"/>
+        <circle cx="2.5" cy="6" r="1.5" stroke="currentColor" stroke-width="1.2"/>
+        <circle cx="9.5" cy="9.5" r="1.5" stroke="currentColor" stroke-width="1.2"/>
+        <line x1="4" y1="5.2" x2="8" y2="3.3" stroke="currentColor" stroke-width="1.2"/>
+        <line x1="4" y1="6.8" x2="8" y2="8.7" stroke="currentColor" stroke-width="1.2"/>
+      </svg>
+      <span class="share-label">Share my mirror</span>
+      <span class="copied-label">Link copied ✓</span>
+    </button>
+    <a class="write-link" href="https://substack.com/new-post" target="_blank" rel="noopener">
+      <span>Write on Substack</span>
+      <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M2 10L10 2M10 2H4M10 2V8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </a>
+  </div>
+
+  <hr class="footer-rule">
+  <footer class="footer">
+    <span>A ledger of words unwritten</span>
+    <span>Est. Today</span>
+  </footer>
+
+  <script>
+    function openModal() {
+      document.getElementById('modal-overlay').classList.add('open');
+      setTimeout(() => document.getElementById('rss-input').focus(), 50);
+    }
+
+    function closeModal() {
+      document.getElementById('modal-overlay').classList.remove('open');
+    }
+
+    function handleOverlayClick(e) {
+      if (e.target === document.getElementById('modal-overlay')) closeModal();
+    }
+
+    // Close on Escape key
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeModal();
+    });
+
+    const STORAGE_KEY = 'substack_mirror_last_post';
+    const SUBSTACK_KEY = 'substack_mirror_url';
+
+    // Restore saved Substack URL
+    const savedUrl = localStorage.getItem(SUBSTACK_KEY);
+    if (savedUrl) {
+      document.getElementById('rss-input').value = savedUrl;
+    }
+
+    async function fetchFromRSS() {
+      const raw = document.getElementById('rss-input').value.trim();
+      const status = document.getElementById('rss-status');
+      const btn = document.getElementById('rss-btn');
+
+      if (!raw) {
+        status.textContent = 'Enter your publication name — e.g. yourletters';
+        status.className = 'modal-status error';
+        return;
+      }
+
+      // Accept full URLs or just the name — extract the subdomain
+      let slug = raw.replace(/^https?:\/\//i, '').split('.')[0].toLowerCase().trim();
+      slug = slug.replace(/[^a-z0-9-]/g, '');
+
+      localStorage.setItem(SUBSTACK_KEY, raw);
+
+      btn.disabled = true;
+      status.textContent = 'Consulting the archive…';
+      status.className = 'modal-status loading';
+
+      try {
+        const res = await fetch(`/.netlify/functions/fetch-feed?slug=${encodeURIComponent(slug)}`, {
+          signal: AbortSignal.timeout(10000),
+        });
+
+        if (!res.ok) {
+          status.textContent = 'Could not reach the server — please try again.';
+          status.className = 'modal-status error';
+          btn.disabled = false;
+          return;
+        }
+
+        const body = await res.text();
+        const parser = new DOMParser();
+        const xml = parser.parseFromString(xmlText, 'text/xml');
+        const items = xml.querySelectorAll('item');
+
+        if (!items || items.length === 0) {
+          status.textContent = `Found the newsletter but no posts yet. Set your date manually below.`;
+          status.className = 'modal-status error';
+          btn.disabled = false;
+          return;
+        }
+
+        const latest = items[0];
+        const title = latest.querySelector('title')?.textContent || 'Untitled';
+        const pubDateStr = latest.querySelector('pubDate')?.textContent;
+        const pubDate = new Date(pubDateStr);
+
+        if (isNaN(pubDate.getTime())) {
+          status.textContent = 'Found your newsletter but could not read the post date. Try setting it manually below.';
+          status.className = 'modal-status error';
+          btn.disabled = false;
+          return;
+        }
+
+        const yyyy = pubDate.getFullYear();
+        const mm = String(pubDate.getMonth() + 1).padStart(2, '0');
+        const dd = String(pubDate.getDate()).padStart(2, '0');
+        const dateStr = `${yyyy}-${mm}-${dd}`;
+
+        input.value = dateStr;
+        localStorage.setItem(STORAGE_KEY, dateStr);
+        render(dateStr);
+
+        status.textContent = `Found: "${title}" · ${pubDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}`;
+        status.className = 'modal-status success';
+
+        setTimeout(() => closeModal(), 1400);
+
+      } catch (e) {
+        status.textContent = 'Request timed out — please try again.';
+        status.className = 'modal-status error';
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    // Allow pressing Enter in the RSS input
+    document.getElementById('rss-input').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') fetchFromRSS();
+    });
+
+    const futureMessages = [
+      { msg: "This date has not yet occurred. The Mirror is confused.", sub: "— The Mirror, checking its calendar" },
+      { msg: "You appear to have published from the future. Remarkable, if true.", sub: "— The Mirror, raising an eyebrow" },
+      { msg: "A scheduled post, perhaps? The Mirror does not deal in prophecy.", sub: "— The Mirror, firmly in the present" },
+      { msg: "Time only moves one way. Adjust your date accordingly.", sub: "— The Mirror, gently" },
+    ];
+
+    const verdicts = {
+      green: [
+        { msg: "Fresh ink still drying. The readers are satisfied.", sub: "— The Mirror, in good spirits" },
+        { msg: "You have written recently. The Mirror has nothing to say.", sub: "— The Mirror, somewhat bored" },
+        { msg: "The presses ran. The words found their readers. All is well.", sub: "— The Mirror, nodding approvingly" },
+      ],
+      amber: [
+        { msg: "The drafts folder grows heavy. The cursor blinks, awaiting.", sub: "— The Mirror, growing impatient" },
+        { msg: "Your readers have not forgotten you. But they are beginning to wonder.", sub: "— The Mirror, lighting a candle" },
+        { msg: "A fortnight approaches. The blank page watches you.", sub: "— The Mirror, tapping its foot" },
+      ],
+      red: [
+        { msg: "The page is white. The silence is loud. The Mirror does not blink.", sub: "— The Mirror, unamused" },
+        { msg: "Somewhere, a reader checks their inbox. Again. Still nothing.", sub: "— The Mirror, genuinely concerned" },
+        { msg: "You had so much to say. What happened?", sub: "— The Mirror, barely whispering" },
+        { msg: "The longer you wait, the heavier the first sentence becomes.", sub: "— The Mirror, with reluctant wisdom" },
+      ]
+    };
+
+    function getTodayStr() {
+      const d = new Date();
+      return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+    }
+
+    function getDaysSince(dateStr) {
+      const then = new Date(dateStr);
+      then.setHours(0, 0, 0, 0);
+      const now = new Date();
+      now.setHours(0, 0, 0, 0);
+      return Math.round((now - then) / (1000 * 60 * 60 * 24));
+    }
+
+    function getStatus(days) {
+      if (days <= 7) return 'green';
+      if (days <= 14) return 'amber';
+      return 'red';
+    }
+
+    function getDaysLabel(days) {
+      if (days === 0) return 'days of silence — published today';
+      if (days === 1) return 'day of silence';
+      return 'days of silence';
+    }
+
+    function randomVerdict(status) {
+      const list = verdicts[status];
+      return list[Math.floor(Math.random() * list.length)];
+    }
+
+    function render(dateStr) {
+      const card = document.getElementById('verdict-card');
+      const noDateMsg = document.getElementById('no-date-msg');
+      const quillIllustration = document.querySelector('.quill-illustration');
+      const futureIllustration = document.getElementById('future-illustration');
+      const daysNum = document.getElementById('days-number');
+      const daysLabel = document.getElementById('days-label');
+      const verdictMsg = document.getElementById('verdict-message');
+
+      if (!dateStr) {
+        noDateMsg.style.display = '';
+        quillIllustration.style.display = 'block';
+        futureIllustration.style.display = 'none';
+        daysNum.style.display = 'none';
+        daysLabel.style.display = 'none';
+        verdictMsg.style.display = 'none';
+        card.className = 'verdict-card';
+        document.getElementById('share-btn').style.display = 'none';
+        return;
+      }
+
+      quillIllustration.style.display = 'none';
+      const days = getDaysSince(dateStr);
+      if (isNaN(days)) return;
+
+      noDateMsg.style.display = 'none';
+      verdictMsg.style.display = '';
+
+      if (days < 0) {
+        const future = futureMessages[Math.floor(Math.random() * futureMessages.length)];
+        futureIllustration.style.display = 'block';
+        daysNum.style.display = 'none';
+        daysLabel.style.display = 'none';
+        verdictMsg.innerHTML = `${future.msg}<span class="byline">${future.sub}</span>`;
+        card.className = 'verdict-card';
+        document.getElementById('share-btn').style.display = '';
+        return;
+      }
+
+      futureIllustration.style.display = 'none';
+      const status = getStatus(days);
+      const verdict = randomVerdict(status);
+
+      daysNum.style.display = '';
+      daysLabel.style.display = '';
+
+      daysNum.textContent = days;
+      daysLabel.textContent = getDaysLabel(days);
+      verdictMsg.innerHTML = `${verdict.msg}<span class="byline">${verdict.sub}</span>`;
+
+      card.className = `verdict-card ${status}`;
+      document.getElementById('share-btn').style.display = '';
+    }
+
+    // Init
+    document.getElementById('today-date').textContent = getTodayStr();
+
+    const input = document.getElementById('last-post-date');
+
+    // Check for shared date in URL first, then localStorage
+    const urlParams = new URLSearchParams(window.location.search);
+    const sharedDate = urlParams.get('d');
+    const stored = localStorage.getItem(STORAGE_KEY);
+    const initialDate = sharedDate || stored;
+
+    if (initialDate) {
+      input.value = initialDate;
+      if (!sharedDate) {} // only persist if not a shared link
+      render(initialDate);
+    }
+
+    input.addEventListener('change', () => {
+      const val = input.value;
+      if (val) {
+        localStorage.setItem(STORAGE_KEY, val);
+        render(val);
+      } else {
+        localStorage.removeItem(STORAGE_KEY);
+        render(null);
+      }
+    });
+
+    function shareState() {
+      const val = input.value;
+      if (!val) return;
+      const url = window.location.origin + window.location.pathname + '?d=' + val;
+      navigator.clipboard.writeText(url).then(() => {
+        const btn = document.getElementById('share-btn');
+        btn.classList.add('copied');
+        setTimeout(() => btn.classList.remove('copied'), 2500);
+      });
+    }
+  </script>
+</body>
+</html>

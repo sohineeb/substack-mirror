@@ -834,7 +834,7 @@
       status.textContent = 'Consulting the archive…';
       status.className = 'modal-status loading';
 
-      const proxyUrl = `https://corsproxy.io/?url=${encodeURIComponent(`https://${slug}.substack.com/feed`)}`;
+      const proxyUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(`https://${slug}.substack.com/feed`)}`;
 
       try {
         const res = await fetch(proxyUrl, {
@@ -842,36 +842,24 @@
         });
 
         if (!res.ok) {
-          status.textContent = `No newsletter found for "${slug}". Check the name and try again.`;
+          status.textContent = `Could not reach the feed service — please try again.`;
           status.className = 'modal-status error';
           btn.disabled = false;
           return;
         }
 
-        const xmlText = await res.text();
+        const data = await res.json();
 
-        if (!xmlText.includes('<item')) {
-          status.textContent = `No published posts found for "${slug}". Use the date picker below instead.`;
+        if (data.status !== 'ok' || !data.items || data.items.length === 0) {
+          status.textContent = `No published posts found for "${slug}". Check the name or use the date picker below.`;
           status.className = 'modal-status error';
           btn.disabled = false;
           return;
         }
 
-        const parser = new DOMParser();
-        const xml = parser.parseFromString(xmlText, 'text/xml');
-        const items = xml.querySelectorAll('item');
-
-        if (!items || items.length === 0) {
-          status.textContent = `No published posts found for "${slug}". Use the date picker below instead.`;
-          status.className = 'modal-status error';
-          btn.disabled = false;
-          return;
-        }
-
-        const latest = items[0];
-        const title = latest.querySelector('title')?.textContent || 'Untitled';
-        const pubDateStr = latest.querySelector('pubDate')?.textContent;
-        const pubDate = new Date(pubDateStr);
+        const latest = data.items[0];
+        const title = latest.title || 'Untitled';
+        const pubDate = new Date(latest.pubDate);
 
         if (isNaN(pubDate.getTime())) {
           status.textContent = 'Found your newsletter but could not read the post date. Try setting it manually below.';

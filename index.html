@@ -228,6 +228,12 @@
       flex-wrap: wrap;
     }
 
+    .modal-input-wrapper {
+      flex: 1;
+      position: relative;
+      min-width: 160px;
+    }
+
     .modal-rss-input {
       font-family: 'Lora', serif;
       font-size: 0.95rem;
@@ -235,21 +241,40 @@
       background: transparent;
       border: none;
       border-bottom: 1.5px solid var(--ink);
-      padding: 0.3rem 0.1rem;
+      padding: 0.3rem 1.5rem 0.3rem 0.1rem;
       outline: none;
-      flex: 1;
-      min-width: 160px;
+      width: 100%;
       transition: border-color 0.2s;
     }
 
     .modal-rss-input::placeholder {
-      color: var(--rule);
+      color: var(--ink);
       font-style: italic;
+      opacity: 0.4;
     }
 
     .modal-rss-input:focus {
       border-bottom-color: var(--accent);
     }
+
+    .modal-clear-btn {
+      position: absolute;
+      right: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      color: var(--rule);
+      font-size: 0.8rem;
+      cursor: pointer;
+      padding: 0.2rem;
+      line-height: 1;
+      display: none;
+      transition: color 0.2s;
+    }
+
+    .modal-clear-btn:hover { color: var(--ink); }
+    .modal-clear-btn.visible { display: block; }
 
     .modal-fetch-btn {
       font-family: 'Lora', serif;
@@ -337,7 +362,6 @@
       transition: border-color 0.2s;
       min-width: 160px;
       min-height: 2rem;
-    }
     }
 
     input[type="date"]:hover,
@@ -686,15 +710,17 @@
       display: none;
       font-family: 'Lora', serif;
       font-style: italic;
-      font-size: 0.7rem;
-      color: var(--rule);
-      margin-top: 0.4rem;
+      font-size: 0.8rem;
+      color: var(--ink);
+      opacity: 0.5;
+      margin-top: 0.35rem;
     }
 
     @media (max-width: 480px) {
       .verdict-card { padding: 1.5rem 1.25rem; }
       .masthead h1 { font-size: 2.2rem; }
       .date-hint { display: block; }
+      .dateline-wrapper { flex-direction: column; align-items: flex-start; gap: 0.25rem; }
     }
   </style>
 </head>
@@ -721,21 +747,23 @@
     <div class="modal">
       <button class="modal-close" onclick="closeModal()">Close ✕</button>
       <p class="modal-title">Auto-fill from Substack</p>
-      <p class="modal-intro">Enter your Substack publication name and The Mirror will find your last post date automatically.</p>
+      <p class="modal-intro">Enter your Substack publication name and The Mirror will find your last post date.</p>
       <div class="modal-help">
-        <p><strong>Have a newsletter?</strong> Just type your publication name — the part before <em>.substack.com</em>. For example, if your newsletter is at <em>yourletters.substack.com</em>, enter <em>yourletters</em>.</p>
-        <p><strong>Not sure of your name?</strong> On the web, go to your Substack dashboard and look at the URL in your browser — it'll say <em>yourname.substack.com</em>. On the mobile app, tap your avatar → Settings → Edit Profile → scroll down to see your URL.</p>
-        <p><strong>No newsletter yet?</strong> Skip this and use the date picker below instead — set it to whenever you last published anything, anywhere.</p>
+        <p><strong>Finding your publication name</strong> — it's the part before <em>.substack.com</em>. If your newsletter lives at <em>yourletters.substack.com</em>, enter <em>yourletters</em>. On the web, check the URL in your Substack dashboard. On mobile, tap your avatar → Settings → Edit Profile → scroll to URL.</p>
+        <p><strong>No newsletter yet, or haven't posted?</strong> Close this and set your date manually using the date picker — it works just as well.</p>
       </div>
       <div class="modal-input-row">
-        <input
-          type="text"
-          class="modal-rss-input"
-          id="rss-input"
-          placeholder="yourpublicationname"
-          autocomplete="off"
-          spellcheck="false"
-        />
+        <div class="modal-input-wrapper">
+          <input
+            type="text"
+            class="modal-rss-input"
+            id="rss-input"
+            placeholder="yourpublicationname"
+            autocomplete="off"
+            spellcheck="false"
+          />
+          <button class="modal-clear-btn" id="rss-clear" onclick="clearRSSInput()" title="Clear">✕</button>
+        </div>
         <button class="modal-fetch-btn" id="rss-btn" onclick="fetchFromRSS()">Fetch ↓</button>
       </div>
       <div class="modal-status" id="rss-status"></div>
@@ -816,13 +844,40 @@
       if (e.key === 'Escape') closeModal();
     });
 
+    function clearRSSInput() {
+      const input = document.getElementById('rss-input');
+      const clearBtn = document.getElementById('rss-clear');
+      const status = document.getElementById('rss-status');
+      input.value = '';
+      clearBtn.classList.remove('visible');
+      status.textContent = '';
+      status.className = 'modal-status';
+      input.focus();
+      localStorage.removeItem(SUBSTACK_KEY);
+    }
+
+    // Show/hide clear button as user types
+    document.addEventListener('DOMContentLoaded', () => {
+      const rssInput = document.getElementById('rss-input');
+      const clearBtn = document.getElementById('rss-clear');
+      if (rssInput && clearBtn) {
+        rssInput.addEventListener('input', () => {
+          clearBtn.classList.toggle('visible', rssInput.value.length > 0);
+        });
+        // Show if pre-filled from localStorage
+        if (rssInput.value.length > 0) clearBtn.classList.add('visible');
+      }
+    });
+
     const STORAGE_KEY = 'substack_mirror_last_post';
     const SUBSTACK_KEY = 'substack_mirror_url';
 
     // Restore saved Substack URL
     const savedUrl = localStorage.getItem(SUBSTACK_KEY);
     if (savedUrl) {
-      document.getElementById('rss-input').value = savedUrl;
+      const rssInput = document.getElementById('rss-input');
+      rssInput.value = savedUrl;
+      document.getElementById('rss-clear')?.classList.add('visible');
     }
 
     async function fetchFromRSS() {
@@ -857,14 +912,15 @@
 
         // Rate limited or service busy
         if (!res.ok || data.status === 'error') {
-          status.textContent = 'Too many writers consulting the Mirror at once. Set your date below — the date picker works just as well.';
+          status.textContent = 'Too many writers are consulting the Mirror at once. Close this and set your date manually — it works just as well.';
           status.className = 'modal-status nudge';
           btn.disabled = false;
           return;
         }
 
         if (!data.items || data.items.length === 0) {
-          status.textContent = 'The Mirror could not find that publication. Check the name, or set your date below.';
+          // Publication exists but no posts, or name is wrong
+          status.textContent = 'The Mirror found a publication but no posts yet — or the name may be misspelled. If you haven\'t written anything yet, close this and set any date manually to begin.';
           status.className = 'modal-status nudge';
           btn.disabled = false;
           return;
@@ -875,7 +931,7 @@
         const pubDate = new Date(latest.pubDate);
 
         if (isNaN(pubDate.getTime())) {
-          status.textContent = 'The Mirror found your newsletter but could not read the date. Set it below — it only takes a moment.';
+          status.textContent = 'The Mirror found your newsletter but could not read the date. Close this and set it manually — it only takes a moment.';
           status.className = 'modal-status nudge';
           btn.disabled = false;
           return;
@@ -896,7 +952,7 @@
         setTimeout(() => closeModal(), 1400);
 
       } catch (e) {
-        status.textContent = 'The Mirror is momentarily indisposed. Set your date below — it works just as well.';
+        status.textContent = 'The Mirror is momentarily indisposed. Close this and set your date manually — it works just as well.';
         status.className = 'modal-status nudge';
       } finally {
         btn.disabled = false;
